@@ -1,35 +1,38 @@
+# File: app.py
+
+import os
 from flask import Flask
+# Import your extensions and configuration objects
 from extensions import db, mail
+from config import Config
+# Import your blueprints to link your application routes
+from routes.ticket_routes import ticket_bp
+from routes.admin_routes import admin_bp
 
+# Initialize Flask app
 app = Flask(__name__)
+# Load configuration from your config.py file
+app.config.from_object(Config)
 
-# Configuration
-app.config['SECRET_KEY'] = 'your-secret-key'
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///mydatabase.db'
-app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-
-# Mail configuration
-app.config['MAIL_SERVER'] = 'smtp.gmail.com'
-app.config['MAIL_PORT'] = 587
-app.config['MAIL_USE_TLS'] = True
-app.config['MAIL_USERNAME'] = 'janvanderwalt2025@gmail.com'
-app.config['MAIL_PASSWORD'] = 'gwdalnypihqizbhf'
-app.config['MAIL_DEFAULT_SENDER'] = 'janvanderwalt2025@gmail.com'
-
-# Initialize extensions
+# Initialize extensions with the app
 db.init_app(app)
 mail.init_app(app)
 
-# Example route
-@app.route('/')
-def home():
-    return "Hello, Flask 3.x on Railway!"
+# Register Blueprints - THIS LOADS YOUR REAL TICKET AND ADMIN PAGES
+app.register_blueprint(ticket_bp)
+app.register_blueprint(admin_bp)
 
-# Initialize the database at startup
+# -----------------------------------------------------------------
+# CRITICAL FIX: Correctly initialize the database at Gunicorn startup
+# This replaces the deprecated @app.before_first_request decorator
 with app.app_context():
     db.create_all()
+# -----------------------------------------------------------------
 
+# Only used when running locally with python app.py
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=8080)
+    # Use 0.0.0.0:$PORT for Railway production, 5000 for local dev
+    # Note: Gunicorn will handle this in production, but this is safe for local testing
+    app.run(host='0.0.0.0', port=int(os.environ.get('PORT', 5000)))
 
 
