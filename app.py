@@ -9,7 +9,7 @@ from routes.admin_routes import admin_bp
 app = Flask(__name__)
 app.config.from_object(Config)
 
-# Initialize extensions
+# Initialize extensions with the app
 db.init_app(app)
 mail.init_app(app)
 
@@ -17,10 +17,11 @@ mail.init_app(app)
 app.register_blueprint(ticket_bp)
 app.register_blueprint(admin_bp)
 
-# Create database tables and run app
+# Create database tables on the first request (works perfectly on Railway)
+@app.before_first_request
+def create_tables():
+    db.create_all()
+
+# Only used when running locally with python app.py
 if __name__ == '__main__':
-    with app.app_context():
-        db.create_all()
     app.run(host='0.0.0.0', port=int(os.environ.get('PORT', 5000)))
-
-
