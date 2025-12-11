@@ -25,12 +25,11 @@ mail.init_app(app)
 def home():
     return "Hello, Flask 3.x on Railway!"
 
-# Initialize the database safely
-def initialize_db():
-    with app.app_context():
-        db.create_all()
+# Initialize the database at startup
+with app.app_context():
+    db.create_all()
 
-# Call initialize_db when the module is loaded
-initialize_db()
+if __name__ == '__main__':
+    app.run(host='0.0.0.0', port=8080)
 
 
