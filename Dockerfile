@@ -9,5 +9,9 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 COPY . .
 
-# Shell form CMD — this expands $PORT correctly at runtime
-CMD gunicorn app:app --bind 0.0.0.0:$PORT --workers 1 --log-level info
+# Copy the entrypoint script and make it executable
+COPY start.sh .
+RUN chmod +x start.sh
+
+# Use the script to start (expands $PORT correctly)
+CMD ["./start.sh"]
