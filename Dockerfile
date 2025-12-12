@@ -9,9 +9,8 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 COPY . .
 
-# Copy the entrypoint script and make it executable
+# This must match the filename exactly
 COPY start.sh .
 RUN chmod +x start.sh
 
-# Use the script to start (expands $PORT correctly)
 CMD ["./start.sh"]
