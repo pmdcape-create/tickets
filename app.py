@@ -11,6 +11,7 @@ from routes.admin_routes import admin_bp
 
 # Initialize Flask app
 app = Flask(__name__)
+app.config['DEBUG'] = True  # ← ADD THIS LINE
 # Load configuration from your config.py file
 app.config.from_object(Config)
 
@@ -34,5 +35,6 @@ if __name__ == '__main__':
     # Use 0.0.0.0:$PORT for Railway production, 5000 for local dev
     # Note: Gunicorn will handle this in production, but this is safe for local testing
     app.run(host='0.0.0.0', port=int(os.environ.get('PORT', 5000)))
+
 
 
