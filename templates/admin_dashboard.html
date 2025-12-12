@@ -123,7 +123,8 @@
     </div>
 
     <div class="footer">
-        Waltco Management • Admin Panel • {{ now()|strftime('%d %B %Y') }}
+        {# CORRECTED - Use dot notation for the datetime method #}
+        Waltco Management • Admin Panel • {{ now().strftime('%d %B %Y') }}
         — <a href="{{ url_for('ticket_bp.submit_ticket') }}" class="text-decoration-none">← Back to Public Form</a>
     </div>
 </div>
@@ -131,3 +132,4 @@
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
+
