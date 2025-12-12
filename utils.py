@@ -4,9 +4,6 @@ from flask import current_app
 from io import BytesIO
 from reportlab.pdfgen import canvas
 
-# IMPORT FOR DEBUGGING
-import traceback 
-
 # Only try to import resend if we're using it (fails gracefully locally if not installed)
 try:
     import resend
@@ -51,13 +48,14 @@ def send_ticket_email(ticket):
         })
         print(f"Email successfully sent via Resend for ticket {ticket.ticket_no}")
     except Exception as e:
-        # --- TEMPORARY DEBUGGING BLOCK ---
+        # --- FINAL CRASH TEST BLOCK ---
+        # This will force the server to crash and log the exact error from Resend.
         print("-" * 50)
-        print("!!! RESEND API ERROR !!!")
-        print(f"The exact error returned by Resend is: {e}")
-        traceback.print_exc() # Print the full traceback for maximum info
+        print("!!! RESEND FAILED! CHECK THE TRACEBACK BELOW !!!")
+        print(f"Error captured: {e}") 
         print("-" * 50)
-        # --- END DEBUGGING BLOCK ---
+        raise e # <--- FORCES CRASH AND LOGGING
+        # --- END CRASH TEST BLOCK ---
 
 
 def generate_ticket_pdf(ticket):
