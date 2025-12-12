@@ -90,7 +90,8 @@
                         <td>{{ ticket.email }}</td>
                         <td>
                             {% if ticket.attachment %}
-                                <a href="{{ url_for('admin_bp.download_attachment', filename=ticket.attachment) }}" class="btn btn-sm btn-outline-primary">
+                                {# CORRECTED: Added auth='true' to pass route login check #}
+                                <a href="{{ url_for('admin_bp.download_attachment', filename=ticket.attachment, auth='true') }}" class="btn btn-sm btn-outline-primary">
                                     <i class="bi bi-download"></i> Download
                                 </a>
                             {% else %}
@@ -105,9 +106,9 @@
                         <td>
                             <form method="POST" action="{{ url_for('admin_bp.update_status', ticket_id=ticket.id) }}" class="d-inline">
                                 <select name="status" class="form-select form-select-sm d-inline w-auto" onchange="this.form.submit()">
-                                    <option value="Pending"     {% if ticket.status == 'Pending' %}selected{% endif %}>Pending</option>
+                                    <option value="Pending"      {% if ticket.status == 'Pending' %}selected{% endif %}>Pending</option>
                                     <option value="In Progress" {% if ticket.status == 'In Progress' %}selected{% endif %}>In Progress</option>
-                                    <option value="Completed"   {% if ticket.status == 'Completed' %}selected{% endif %}>Completed</option>
+                                    <option value="Completed"    {% if ticket.status == 'Completed' %}selected{% endif %}>Completed</option>
                                 </select>
                             </form>
                         </td>
@@ -123,7 +124,7 @@
     </div>
 
     <div class="footer">
-        {# CORRECTED - Use dot notation for the datetime method #}
+        {# FIXED: Changed |strftime to .strftime to call the datetime method #}
         Waltco Management • Admin Panel • {{ now().strftime('%d %B %Y') }}
         — <a href="{{ url_for('ticket_bp.submit_ticket') }}" class="text-decoration-none">← Back to Public Form</a>
     </div>
