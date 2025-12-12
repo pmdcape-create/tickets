@@ -45,7 +45,7 @@ def submit_ticket():
         db.session.commit()
 
         # Send email notification
-        send_ticket_email(ticket, mail)
+        send_ticket_email(ticket)
 
         flash(f'Ticket {ticket_no} submitted successfully!', 'success')
         ticket_submitted = True
@@ -56,3 +56,4 @@ def submit_ticket():
         ticket_submitted=ticket_submitted,
         ticket_no=ticket_no
     )
+
