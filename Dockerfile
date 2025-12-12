@@ -16,7 +16,7 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Copy the rest of the application code
 COPY . .
 
-# *** CRITICAL FIX FOR RAILWAY PORT ERROR ***
-# Use the string form of CMD with 'sh -c' to force the shell interpreter 
-# to correctly expand the $PORT variable before passing the command to gunicorn.
-CMD sh -c "gunicorn app:app --bind 0.0.0.0:$PORT --workers 1 --log-level info"
+# *** THE FINAL FIX: Exec Form Array (No Shell) ***
+# This avoids using 'sh -c' entirely and directly executes gunicorn,
+# passing $PORT as an argument. This is the most reliable structure.
+CMD ["gunicorn", "app:app", "--bind", "0.0.0.0:$PORT", "--workers", "1", "--log-level", "info"]
