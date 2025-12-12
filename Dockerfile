@@ -9,8 +9,7 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 COPY . .
 
-# This must match the filename exactly
-COPY start.sh .
+# Make sure the script is executable — this works even if name was wrong before
 RUN chmod +x start.sh
 
 CMD ["./start.sh"]
