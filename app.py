@@ -2,39 +2,51 @@
 
 import os
 from flask import Flask
-# Import your extensions and configuration objects
+from datetime import datetime # <-- MUST BE AT THE TOP
 from extensions import db, mail
 from config import Config
-# Import your blueprints to link your application routes
 from routes.ticket_routes import ticket_bp
 from routes.admin_routes import admin_bp
 
-# Initialize Flask app
-app = Flask(__name__)
-app.config['DEBUG'] = True  # ← ADD THIS LINE
-# Load configuration from your config.py file
-app.config.from_object(Config)
+# -----------------------------------------------------------------
+# CRITICAL: Use the Factory Pattern (create_app) for Railway/Gunicorn
+# -----------------------------------------------------------------
+def create_app():
+    # Initialize Flask app
+    app = Flask(__name__)
+    
+    # Load configuration
+    app.config.from_object(Config)
+    # Set DEBUG mode explicitly, often good practice during development
+    app.config['DEBUG'] = True 
+    
+    # Initialize extensions with the app
+    db.init_app(app)
+    mail.init_app(app)
 
-# Initialize extensions with the app
-db.init_app(app)
-mail.init_app(app)
+    # FIX: Register 'now()' as a global function for templates
+    # This must be done AFTER the 'app' object is created.
+    app.jinja_env.globals.update(now=datetime.now)
+    
+    # Register Blueprints
+    app.register_blueprint(ticket_bp)
+    app.register_blueprint(admin_bp)
 
-# Register Blueprints - THIS LOADS YOUR REAL TICKET AND ADMIN PAGES
-app.register_blueprint(ticket_bp)
-app.register_blueprint(admin_bp)
+    # IMPORTANT: Ensure the database is created within the app context
+    with app.app_context():
+        db.create_all()
+
+    return app
 
 # -----------------------------------------------------------------
-# CRITICAL FIX: Correctly initialize the database at Gunicorn startup
-# This replaces the deprecated @app.before_first_request decorator
-with app.app_context():
-    db.create_all()
+# Entry points for production (Gunicorn) and local development
 # -----------------------------------------------------------------
+
+# Gunicorn/Production entry point (Used by Railway)
+app = create_app()
 
 # Only used when running locally with python app.py
 if __name__ == '__main__':
-    # Use 0.0.0.0:$PORT for Railway production, 5000 for local dev
-    # Note: Gunicorn will handle this in production, but this is safe for local testing
-    app.run(host='0.0.0.0', port=int(os.environ.get('PORT', 5000)))
-
-
-
+    # When running locally, use the app instance created by create_app()
+    port = int(os.environ.get('PORT', 5000))
+    app.run(host='0.0.0.0', port=port)
