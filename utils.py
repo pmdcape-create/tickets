@@ -35,12 +35,12 @@ def send_ticket_email(ticket):
     <p><strong>Contact:</strong> {ticket.contact_number} | {ticket.email}</p>
     <p><strong>Message:</strong><br>{ticket.message.replace(chr(10), '<br>')}</p>
     <hr>
-    <small>This is an automated notification from the Parkview Gardens ticketing system.</small>
+    <small>This is an automated notification from the PMDCape ticketing system.</small>
     """
 
     try:
         resend.Emails.send({
-            "from": os.getenv("FROM_EMAIL", "Parkview Gardens <onboarding@resend.dev>"),
+            "from": os.getenv("FROM_EMAIL", "pmdcape <onboarding@resend.dev>"),
             "to": [destination_email],
             "cc": [ticket.email],  # tenant gets a copy
             "subject": f"New Ticket #{ticket.ticket_no} – {ticket.category}",
@@ -74,3 +74,4 @@ def generate_ticket_pdf(ticket):
     p.save()
     pdf_buffer.seek(0)
     return pdf_buffer
+
