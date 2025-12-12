@@ -5,6 +5,7 @@ from models import Ticket
 from utils import send_ticket_email
 import os
 from werkzeug.utils import secure_filename
+from datetime import datetime # ⬅️ MOVED IMPORT TO TOP
 
 ticket_bp = Blueprint('ticket_bp', __name__)
 
@@ -18,15 +19,18 @@ def submit_ticket():
     ticket_no = None
 
     if form.validate_on_submit():
-        import datetime
-        ticket_no = f"T{int(datetime.datetime.utcnow().timestamp())}"
+        
+        # Define current time once for consistency (Ticket No and submitted_at)
+        current_time = datetime.utcnow()
+        ticket_no = f"T{int(current_time.timestamp())}"
 
         # Handle attachment
         attachment_filename = None
         if form.attachment.data:
             file = form.attachment.data
             filename = secure_filename(file.filename)
-            file.save(os.path.join(UPLOAD_FOLDER, filename))
+            # Use os.path.join for platform independence
+            file.save(os.path.join(current_app.root_path, UPLOAD_FOLDER, filename))
             attachment_filename = filename
 
         # Create ticket entry
@@ -38,7 +42,9 @@ def submit_ticket():
             message=form.message.data,
             contact_number=form.contact_number.data,
             email=form.email.data,
-            attachment=attachment_filename
+            attachment=attachment_filename,
+            # 🚨 CRITICAL: Explicitly pass the datetime object for sorting
+            submitted_at=current_time
         )
 
         db.session.add(ticket)
@@ -56,4 +62,3 @@ def submit_ticket():
         ticket_submitted=ticket_submitted,
         ticket_no=ticket_no
     )
-
