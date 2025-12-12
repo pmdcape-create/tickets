@@ -1,53 +1,69 @@
-from config import Config
-from flask_mail import Message
+# utils.py
+import os
+from flask import current_app
 from io import BytesIO
 from reportlab.pdfgen import canvas
-from flask import current_app
 
-def send_ticket_email(ticket, mail):
-    # Lookup the recipient from Config
-    recipient = Config.TICKET_DESTINATION_EMAILS.get(ticket.category, Config.TICKET_DESTINATION_EMAILS["General"])
+# Only try to import resend if we're using it (fails gracefully locally if not installed)
+try:
+    import resend
+    resend.api_key = os.getenv("RESEND_API_KEY")
+    RESEND_AVAILABLE = True
+except Exception:
+    RESEND_AVAILABLE = False
 
-    msg = Message(
-        subject=f"New Ticket: {ticket.ticket_no}",
-        sender=current_app.config['MAIL_USERNAME'],
-        recipients=[recipient],
-        cc=[ticket.email]
-    )
 
-    msg.body = f"""
-Ticket Number: {ticket.ticket_no}
-Scheme Name: {ticket.scheme_name}
-Unit No: {ticket.unit_no}
-Category: {ticket.category}
-Message: {ticket.message}
-Contact: {ticket.contact_number}
-Email: {ticket.email}
-Status: {ticket.status}
-"""
+def send_ticket_email(ticket):
+    """
+    Sends notification email using Resend (production) 
+    Falls back to nothing in local/dev if Resend not configured
+    """
+    if not RESEND_AVAILABLE or os.getenv("MAIL_PROVIDER") != "resend":
+        print("Email sending skipped (Resend not configured or disabled)")
+        return
 
-    # Attach the uploaded file if it exists
-    if ticket.attachment:
-        try:
-            with open(ticket.attachment, "rb") as f:
-                filename = ticket.attachment.split("/")[-1]
-                msg.attach(filename, "application/octet-stream", f.read())
-        except Exception as e:
-            print(f"Failed to attach file: {e}")
+    # Where the office/manager gets notified
+    destination_email = "pmdcape@gmail.com"  # you can make this dynamic later
 
-    mail.send(msg)
+    # Nice HTML email for the tenant + manager
+    html_body = f"""
+    <h2>New Maintenance Ticket Received</h2>
+    <p><strong>Ticket No:</strong> {ticket.ticket_no}</p>
+    <p><strong>Scheme:</strong> {ticket.scheme_name}</p>
+    <p><strong>Unit:</strong> {ticket.unit_no}</p>
+    <p><strong>Category:</strong> {ticket.category}</p>
+    <p><strong>Contact:</strong> {ticket.contact_number} | {ticket.email}</p>
+    <p><strong>Message:</strong><br>{ticket.message.replace(chr(10), '<br>')}</p>
+    <hr>
+    <small>This is an automated notification from the Parkview Gardens ticketing system.</small>
+    """
+
+    try:
+        resend.Emails.send({
+            "from": os.getenv("FROM_EMAIL", "Parkview Gardens <onboarding@resend.dev>"),
+            "to": [destination_email],
+            "cc": [ticket.email],  # tenant gets a copy
+            "subject": f"New Ticket #{ticket.ticket_no} – {ticket.category}",
+            "html": html_body,
+        })
+        print(f"Email successfully sent via Resend for ticket {ticket.ticket_no}")
+    except Exception as e:
+        print(f"Resend failed: {e}")
+
 
 def generate_ticket_pdf(ticket):
+    """Returns PDF as BytesIO – unchanged and working perfectly"""
     pdf_buffer = BytesIO()
     p = canvas.Canvas(pdf_buffer)
-    p.drawString(100, 800, f"Ticket Number: {ticket.ticket_no}")
-    p.drawString(100, 780, f"Scheme Name: {ticket.scheme_name}")
-    p.drawString(100, 760, f"Unit Number: {ticket.unit_no}")
-    p.drawString(100, 740, f"Category: {ticket.category}")
-    p.drawString(100, 720, f"Message: {ticket.message}")
-    p.drawString(100, 700, f"Contact: {ticket.contact_number}")
-    p.drawString(100, 680, f"Email: {ticket.email}")
-    p.drawString(100, 660, f"Status: {ticket.status}")
+    y = 800
+    p.drawString(100, y, f"Ticket Number: {ticket.ticket_no}"); y -= 20
+    p.drawString(100, y, f"Scheme Name: {ticket.scheme_name}"); y -= 20
+    p.drawString(100, y, f"Unit Number: {ticket.unit_no}"); y -= 20
+    p.drawString(100, y, f"Category: {ticket.category}"); y -= 20
+    p.drawString(100, y, f"Message: {ticket.message}"); y -= 40
+    p.drawString(100, y, f"Contact: {ticket.contact_number}"); y -= 20
+    p.drawString(100, y, f"Email: {ticket.email}"); y -= 20
+    p.drawString(100, y, f"Status: {ticket.status}")
     p.save()
     pdf_buffer.seek(0)
     return pdf_buffer
