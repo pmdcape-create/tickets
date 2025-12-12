@@ -9,5 +9,4 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 COPY . .
 
-# This is the ONLY line that has worked on Railway Docker for the last 6 months
-CMD gunicorn app:app --bind "0.0.0.0:${PORT:-8080}" --workers 1 --log-level info
+CMD ["sh", "-c", "gunicorn app:app --bind 0.0.0.0:$PORT --workers 1 --log-level info"]
