@@ -12,4 +12,4 @@ COPY . .
 
 # Railway injects the real port via the $PORT environment variable at runtime
 # We just make sure the variable exists (fallback to 8080 if something goes wrong)
-CMD gunicorn app:app --bind 0.0.0.0:${PORT:-8080} --workers 1 --log-level info
+CMD ["gunicorn", "app:app", "--bind", "0.0.0.0:${PORT:-8000}", "--workers", "1", "--log-level", "info"]
