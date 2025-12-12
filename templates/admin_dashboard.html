@@ -13,7 +13,7 @@
             font-family: 'Segoe UI', sans-serif;
         }
         .dashboard-card {
-            max-width: 1200px;
+            max-width: 1400px; /* Increased width to accommodate new columns */
             margin: 40px auto;
             background: white;
             border-radius: 16px;
@@ -38,6 +38,13 @@
         }
         .btn-sm { padding: 0.4rem 0.8rem; }
         .footer { text-align: center; padding: 1.5rem; color: #64748b; font-size:0.9rem; }
+        .filter-controls {
+            padding: 1.5rem;
+            border-bottom: 1px solid #e2e8f0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
     </style>
 </head>
 <body>
@@ -45,9 +52,47 @@
 <div class="dashboard-card">
     <div class="header">
         <h2>Admin Dashboard – Service Tickets</h2>
-        <p>Total tickets: {{ tickets|length }} | Last updated: just now</p>
+        <p>Total tickets: {{ tickets|length }} | Last updated: {{ now().strftime('%H:%M:%S') }}</p>
     </div>
 
+    {# --- FILTERING AND SORTING CONTROLS --- #}
+    <div class="filter-controls">
+        <div class="status-filters">
+            <span class="text-muted me-3">Filter by Status:</span>
+            {% set auth_q = 'auth=' + auth_token %}
+            
+            <a href="{{ url_for('admin_bp.dashboard', status='Pending', auth=auth_token) }}"
+               class="btn btn-sm {% if active_status == 'Pending' %}btn-warning{% else %}btn-outline-warning{% endif %}">
+               Pending
+            </a>
+            <a href="{{ url_for('admin_bp.dashboard', status='In Progress', auth=auth_token) }}"
+               class="btn btn-sm {% if active_status == 'In Progress' %}btn-primary{% else %}btn-outline-primary{% endif %}">
+               In Progress
+            </a>
+            <a href="{{ url_for('admin_bp.dashboard', status='Completed', auth=auth_token) }}"
+               class="btn btn-sm {% if active_status == 'Completed' %}btn-success{% else %}btn-outline-success{% endif %}">
+               Completed
+            </a>
+            <a href="{{ url_for('admin_bp.dashboard', auth=auth_token) }}"
+               class="btn btn-sm {% if not active_status %}btn-secondary{% else %}btn-outline-secondary{% endif %} ms-3">
+               Show All
+            </a>
+        </div>
+        
+        <div class="sorting-controls">
+            <span class="text-muted me-3">Sort by Date:</span>
+            <a href="{{ url_for('admin_bp.dashboard', sort='newest', status=active_status, auth=auth_token) }}"
+               class="btn btn-sm {% if active_sort == 'newest' %}btn-info{% else %}btn-outline-info{% endif %}">
+               <i class="bi bi-sort-down"></i> Newest First
+            </a>
+            <a href="{{ url_for('admin_bp.dashboard', sort='oldest', status=active_status, auth=auth_token) }}"
+               class="btn btn-sm {% if active_sort == 'oldest' %}btn-info{% else %}btn-outline-info{% endif %}">
+               <i class="bi bi-sort-up"></i> Oldest First
+            </a>
+        </div>
+    </div>
+    
+    {# --- FLASHED MESSAGES --- #}
     <div class="p-4">
         {% with messages = get_flashed_messages(with_categories=true) %}
           {% if messages %}
@@ -66,6 +111,8 @@
                     <tr>
                         <th>#</th>
                         <th>Ticket No</th>
+                        {# 🚨 NEW COLUMN #}
+                        <th>Submitted On</th> 
                         <th>Scheme</th>
                         <th>Unit</th>
                         <th>Category</th>
@@ -74,7 +121,7 @@
                         <th>Email</th>
                         <th>Attachment</th>
                         <th>Status</th>
-                        <th>Action</th>
+                        <th style="width:18%;">Action</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -82,6 +129,8 @@
                     <tr>
                         <td>{{ loop.index }}</td>
                         <td><strong>{{ ticket.ticket_no }}</strong></td>
+                        {# 🚨 NEW FIELD DISPLAY #}
+                        <td>{{ ticket.submitted_at.strftime('%d %b %Y %H:%M') }}</td>
                         <td>{{ ticket.scheme_name }}</td>
                         <td>{{ ticket.unit_no }}</td>
                         <td><span class="badge bg-secondary">{{ ticket.category }}</span></td>
@@ -90,8 +139,8 @@
                         <td>{{ ticket.email }}</td>
                         <td>
                             {% if ticket.attachment %}
-                                {# CORRECTED: Added auth='true' to pass route login check #}
-                                <a href="{{ url_for('admin_bp.download_attachment', filename=ticket.attachment, auth='true') }}" class="btn btn-sm btn-outline-primary">
+                                {# DOWNLOAD FIX #}
+                                <a href="{{ url_for('admin_bp.download_attachment', filename=ticket.attachment, auth=auth_token) }}" class="btn btn-sm btn-outline-primary">
                                     <i class="bi bi-download"></i> Download
                                 </a>
                             {% else %}
@@ -104,18 +153,27 @@
                             </span>
                         </td>
                         <td>
-                            <form method="POST" action="{{ url_for('admin_bp.update_status', ticket_id=ticket.id) }}" class="d-inline">
-                                <select name="status" class="form-select form-select-sm d-inline w-auto" onchange="this.form.submit()">
-                                    <option value="Pending"      {% if ticket.status == 'Pending' %}selected{% endif %}>Pending</option>
-                                    <option value="In Progress" {% if ticket.status == 'In Progress' %}selected{% endif %}>In Progress</option>
-                                    <option value="Completed"    {% if ticket.status == 'Completed' %}selected{% endif %}>Completed</option>
-                                </select>
-                            </form>
+                            <div class="d-flex flex-column gap-2">
+                                {# STATUS UPDATE FORM #}
+                                <form method="POST" action="{{ url_for('admin_bp.update_status', ticket_id=ticket.id, auth=auth_token) }}" class="d-inline">
+                                    <select name="status" class="form-select form-select-sm" onchange="this.form.submit()">
+                                        <option value="Pending"      {% if ticket.status == 'Pending' %}selected{% endif %}>Pending</option>
+                                        <option value="In Progress" {% if ticket.status == 'In Progress' %}selected{% endif %}>In Progress</option>
+                                        <option value="Completed"    {% if ticket.status == 'Completed' %}selected{% endif %}>Completed</option>
+                                    </select>
+                                </form>
+                                {# RESEND EMAIL BUTTON (for backup workflow) #}
+                                <a href="{{ url_for('admin_bp.resend_email', ticket_id=ticket.id, auth=auth_token) }}" 
+                                   class="btn btn-sm btn-outline-info w-100" 
+                                   onclick="return confirm('Are you sure you want to re-send the email notification for Ticket {{ ticket.ticket_no }}?');">
+                                    <i class="bi bi-envelope"></i> Resend Email
+                                </a>
+                            </div>
                         </td>
                     </tr>
                     {% else %}
                     <tr>
-                        <td colspan="11" class="text-center py-5 text-muted">No tickets yet – submit one from the public form!</td>
+                        <td colspan="12" class="text-center py-5 text-muted">No tickets found matching your criteria.</td>
                     </tr>
                     {% endfor %}
                 </tbody>
@@ -124,7 +182,6 @@
     </div>
 
     <div class="footer">
-        {# FIXED: Changed |strftime to .strftime to call the datetime method #}
         Waltco Management • Admin Panel • {{ now().strftime('%d %B %Y') }}
         — <a href="{{ url_for('ticket_bp.submit_ticket') }}" class="text-decoration-none">← Back to Public Form</a>
     </div>
@@ -133,4 +190,3 @@
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
-
