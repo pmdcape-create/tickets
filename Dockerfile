@@ -1,7 +1,7 @@
 # Start with the official Python slim image for a smaller container
 FROM python:3.13-slim
 
-# Set the working directory inside the container
+# Set the working directory inside the container (Should be done early)
 WORKDIR /app
 
 # Install build essentials and CRITICAL PostgreSQL client libraries
@@ -12,6 +12,10 @@ RUN apt-get update && apt-get install -y \
     libpq-dev \
     && rm -rf /var/lib/apt/lists/*
 
+# *** TEMPORARY LINE TO BREAK CACHE AND FORCE NEW INSTALL ***
+# This forces Docker to re-run all steps below it, ensuring psycopg2 is installed.
+RUN echo "Triggering fresh build"
+
 # Copy requirements and install dependencies
 # Note: Ensure 'psycopg2-binary' is in your requirements.txt
 COPY requirements.txt .
@@ -21,6 +25,5 @@ RUN pip install --no-cache-dir -r requirements.txt
 COPY . .
 
 # Set the application startup command using the robust Exec Form.
-# This structure reliably passes the $PORT variable to Gunicorn, 
-# resolving the original port crashing issue.
+# This reliably passes the $PORT variable to Gunicorn.
 CMD ["gunicorn", "app:app", "--bind", "0.0.0.0:$PORT", "--workers", "1", "--log-level", "info"]
