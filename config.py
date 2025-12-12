@@ -1,33 +1,33 @@
-# File: config.py
-
+# config.py — SAFE VERSION
 import os
 
 class Config:
-    # --- Secrets and Basic Configuration ---
-    SECRET_KEY = "your-secret-key"
+    SECRET_KEY = os.getenv("SECRET_KEY", "fallback-secret-for-local-dev")
 
-    # --- Email Settings (FIXED FOR RAILWAY DEPLOYMENT) ---
-    MAIL_SERVER = "smtp.gmail.com"
-    MAIL_PORT = 465       # <-- CRITICAL CHANGE: Use secure port 465
-    MAIL_USE_TLS = False  # <-- CRITICAL CHANGE: Disable TLS
-    MAIL_USE_SSL = True   # <-- ADDED: Enable SSL protocol for port 465
-    MAIL_TIMEOUT = 30     # High timeout kept as a safeguard
-    
-    MAIL_USERNAME = "janvanderwalt2025@gmail.com"
-    MAIL_PASSWORD = "gwdalnypihqizbhf" # WARNING: Highly recommend moving this to a Railway Environment Variable!
-    MAIL_DEFAULT_SENDER = "janvanderwalt2025@gmail.com"
+    # Email — everything comes from Railway variables
+    MAIL_SERVER = os.getenv("MAIL_SERVER")
+    MAIL_PORT = int(os.getenv("MAIL_PORT", 587))
+    MAIL_USE_TLS = os.getenv("MAIL_USE_TLS", "True").lower() == "true"
+    MAIL_USE_SSL = os.getenv("MAIL_USE_SSL", "False").lower() == "true"
+    MAIL_USERNAME = os.getenv("MAIL_USERNAME")
+    MAIL_PASSWORD = os.getenv("MAIL_PASSWORD")
+    MAIL_DEFAULT_SENDER = os.getenv("MAIL_DEFAULT_SENDER", MAIL_USERNAME)
+    MAIL_TIMEOUT = 20
 
-    # --- Ticket Destination Emails ---
+    # Where tickets get forwarded
     TICKET_DESTINATION_EMAILS = {
-        "Maintenance": "pmdcape@gmail.com",
-        "Information": "pmdcape@gmail.com",
-        "Finance": "pmdcape@gmail.com",
-        "General": "pmdcape@gmail.com",
+        "Maintenance": os.getenv("DEST_MAINTENANCE", "pmdcape@gmail.com"),
+        "Information":  os.getenv("DEST_INFO", "pmdcape@gmail.com"),
+        "Finance":      os.getenv("DEST_FINANCE", "pmdcape@gmail.com"),
+        "General":      os.getenv("DEST_GENERAL", "pmdcape@gmail.com"),
     }
 
-    # --- Database Configuration ---
-    # Uses a relative path so the SQLite file is created inside the container
-    SQLALCHEMY_DATABASE_URI = 'sqlite:///tickets.db'
+    # Database
+    SQLALCHEMY_DATABASE_URI = os.getenv(
+        "DATABASE_URL",
+        "sqlite:///tickets.db"  # fallback for local development
+    )
     SQLALCHEMY_TRACK_MODIFICATIONS = False
+
 
 
