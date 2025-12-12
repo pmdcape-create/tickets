@@ -27,12 +27,8 @@
             text-align: center;
         }
         .header h2 { margin: 0; font-weight: 600; }
-        .table {
-            margin: 0;
-        }
-        .table thead {
-            background-color: #f1f5f9;
-        }
+        .table { margin: 0; }
+        .table thead { background-color: #f1f5f9; }
         .status-pending    { background:#fef3c7; color:#92400e; }
         .status-inprogress { background:#dbeafe; color:#4338ca; }
         .status-completed  { background:#d1fae5; color:#065f46; }
@@ -95,7 +91,7 @@
                         <td>
                             {% if ticket.attachment %}
                                 <a href="{{ url_for('admin_bp.download_attachment', filename=ticket.attachment) }}" class="btn btn-sm btn-outline-primary">
-                                    Download
+                                    <i class="bi bi-download"></i> Download
                                 </a>
                             {% else %}
                                 <span class="text-muted">—</span>
@@ -118,7 +114,7 @@
                     </tr>
                     {% else %}
                     <tr>
-                        <td colspan="11" class="text-center py-5 text-muted">No tickets yet</td>
+                        <td colspan="11" class="text-center py-5 text-muted">No tickets yet – submit one from the public form!</td>
                     </tr>
                     {% endfor %}
                 </tbody>
@@ -128,9 +124,10 @@
 
     <div class="footer">
         Waltco Management • Admin Panel • {{ now()|strftime('%d %B %Y') }}
-        — <a href="{{ url_for('ticket_bp.submit_ticket') }}" class="text-decoration-none">Public Form</a>
+        — <a href="{{ url_for('ticket_bp.submit_ticket') }}" class="text-decoration-none">← Back to Public Form</a>
     </div>
 </div>
 
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
