@@ -26,9 +26,12 @@ def create_app():
     db.init_app(app)
     mail.init_app(app)
 
+    # 🚨 CRITICAL FIX for Flask-Migrate (Alembic) 🚨
+    # Importing models here ensures they are loaded into SQLAlchemy's metadata 
+    # before the 'migrate' object is created, allowing Alembic to detect changes.
+    import models
+    
     # 🚨 INITIALIZE FLASK-MIGRATE HERE 🚨
-    # This links the Flask app instance and the SQLAlchemy instance (db)
-    # so the 'flask db' commands know what to track.
     migrate = Migrate(app, db) # ⬅️ Assign the Migrate object to a variable
     
     # FIX: Register 'now()' as a global function for templates
@@ -40,8 +43,6 @@ def create_app():
     app.register_blueprint(admin_bp)
 
     # IMPORTANT: Ensure the database is created within the app context
-    # NOTE: db.create_all() is fine for the first run, but rely on 
-    # migrations (flask db upgrade) for all subsequent schema changes.
     with app.app_context():
         db.create_all()
 
@@ -60,4 +61,3 @@ if __name__ == '__main__':
     # When running locally, use the app instance created by create_app()
     port = int(os.environ.get('PORT', 5000))
     app.run(host='0.0.0.0', port=port)
-
